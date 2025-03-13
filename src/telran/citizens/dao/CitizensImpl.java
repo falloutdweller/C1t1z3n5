@@ -105,7 +105,7 @@ public class CitizensImpl implements Citizens {
         return res;
     }
 
-    //O(n)
+    //O(1)
     @Override
     public int size() {
         return idCollection.size();
