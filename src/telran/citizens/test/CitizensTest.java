@@ -51,10 +51,11 @@ class CitizensTest {
 
     @org.junit.jupiter.api.Test
     void testFindByMinAndMaxAge() {
-        Iterable<Person> actual = citizens.find(30, 35);
+        Iterable<Person> actual = citizens.find(20, 35);
         List<Person> expected = List.of(
-                new Person(1, "Alice", "Smith", LocalDate.of(1990, 5, 15)),
-                new Person(3, "Charlie", "Brown", LocalDate.of(1995, 3, 8))
+                new Person(4, "David", "Williams", LocalDate.of(2000, 7, 25)),
+                new Person(3, "Charlie", "Brown", LocalDate.of(1995, 3, 8)),
+                new Person(1, "Alice", "Smith", LocalDate.of(1990, 5, 15))
         );
         assertIterableEquals(expected, actual);
         actual = citizens.find(10, 20);

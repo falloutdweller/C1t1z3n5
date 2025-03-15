@@ -2,12 +2,16 @@ package telran.citizens.dao;
 
 import telran.citizens.model.Person;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Predicate;
 
 public class CitizensImpl implements Citizens {
 
-    public Collection<Person> idCollection;
+    private List<Person> idCollection;
+    private List<Person> lastNameCollection;
+    private List<Person> ageCollection;
+
 
     private static final Comparator<Person> lastNameComparator = (p1, p2) -> {
         int res = p1.getLastName().compareToIgnoreCase(p2.getLastName());
@@ -20,20 +24,32 @@ public class CitizensImpl implements Citizens {
 
     public CitizensImpl() {
         this.idCollection = new ArrayList<>();
+        this.lastNameCollection = new ArrayList<>();
+        this.ageCollection = new ArrayList<>();
+
     }
 
     public CitizensImpl(List<Person> citizens) {
         this();
-        this.idCollection.addAll(citizens);
+        citizens.forEach(p -> add(p));
+
     }
 
     //O(n)
     @Override
     public boolean add(Person person) {
-        if (person == null || idCollection.contains(person)) {
+        if (person == null || find(person.getId()) != null) {
             return false;
         }
-        idCollection.add(person);
+        int index = Collections.binarySearch(idCollection, person);
+        index = index >= 0 ? index : -index - 1;
+        idCollection.add(index, person);
+        index = Collections.binarySearch(lastNameCollection, person, lastNameComparator);
+        index = index >= 0 ? index : -index - 1;
+        lastNameCollection.add(index, person);
+        index = Collections.binarySearch(ageCollection, person, ageComparator);
+        index = index >= 0 ? index : -index - 1;
+        ageCollection.add(index, person);
         return true;
     }
 
@@ -45,65 +61,71 @@ public class CitizensImpl implements Citizens {
             return false;
         }
         idCollection.remove(person);
+        lastNameCollection.remove(person);
+        ageCollection.remove(person);
         return true;
     }
 
-    //O(n)
+    //O(log(n))
     @Override
     public Person find(int id) {
-        for (Person person : idCollection) {
-            if (person.getId() == id) {
-                return person;
-            }
+        int index = Collections.binarySearch(idCollection, new Person(id, null, null, null));
+        if (index >= 0) {
+            return idCollection.get(index);
         }
         return null;
     }
 
-    //O(n)
+    //O(log(n))
     @Override
     public Iterable<Person> find(int minAge, int maxAge) {
-        return findByPredicate(p -> p.getAge() >= minAge && p.getAge() <= maxAge);
+        Person person = new Person(Integer.MIN_VALUE, null, null, LocalDate.now().minusYears(minAge));
+        int indexFrom = -Collections.binarySearch(ageCollection, person, ageComparator) - 1;
+        person = new Person(Integer.MAX_VALUE, null, null, LocalDate.now().minusYears(maxAge));
+        int indexTo = -Collections.binarySearch(ageCollection, person, ageComparator) - 1;
+        
+        return ageCollection.subList(indexFrom, indexTo);
     }
 
-    //O(n)
+    //O(log(n))
     @Override
     public Iterable<Person> find(String lastName) {
-        return findByPredicate(p -> p.getLastName().equals(lastName));
+        Person person = new Person(Integer.MIN_VALUE, null, lastName, null);
+        int indexFrom = -Collections.binarySearch(lastNameCollection, person, lastNameComparator) -1;
+        person = new Person(Integer.MAX_VALUE, null, lastName, null);
+        int indexTo = -Collections.binarySearch(lastNameCollection, person, lastNameComparator)-1;
+
+        return lastNameCollection.subList(indexFrom, indexTo);
+
     }
 
-    //O(n*log(n))
+    //O(1)
     @Override
     public Iterable<Person> getAllPersonsSortedById() {
-        ArrayList<Person> res = (ArrayList<Person>) idCollection;
-        res.sort((p1, p2) -> p1.compareTo(p2));
-        return res;
+        return idCollection;
     }
 
-    //O(n*log(n))
+    //O(1)
     @Override
     public Iterable<Person> getAllPersonsSortedByAge() {
-        ArrayList<Person> res = (ArrayList<Person>) idCollection;
-        res.sort(ageComparator);
-        return res;
+        return ageCollection;
     }
 
-    //O(n*log(n))
+    //O(1)
     @Override
     public Iterable<Person> getAllPersonsSortedByLastName() {
-        ArrayList<Person> res = (ArrayList<Person>) idCollection;
-        res.sort(lastNameComparator);
-        return res;
+        return lastNameCollection;
     }
 
-    private Iterable<Person> findByPredicate(Predicate<Person> predicate) {
-        Collection<Person> res = new ArrayList<>();
-        for (Person person : idCollection) {
-            if (predicate.test(person)) {
-                res.add(person);
-            }
-        }
-        return res;
-    }
+//    private Iterable<Person> findByPredicate(Predicate<Person> predicate, List<Person> collection) {
+//        Collection<Person> res = new ArrayList<>();
+//        for (Person person : collection) {
+//            if (predicate.test(person)) {
+//                res.add(person);
+//            }
+//        }
+//        return res;
+//    }
 
     //O(1)
     @Override
